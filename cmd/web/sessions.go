@@ -2,13 +2,14 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/alexedwards/scs/v2"
 )
 
 func getSession() *scs.SessionManager {
 	session := scs.New() // sessionマネージャー
-	session.Lifetime = 24 * 60 * 60 // 24時間
+	session.Lifetime = 24 * time.Hour // 24時間
 	session.Cookie.Persist = true // ブラウザを閉じてもセッションを保持
 	// Laxモードでは、GETリクエストによるクロスサイトリクエストであればCookieを送信するが、
 	// POSTリクエストや他のHTTPメソッドによるクロスサイトリクエストではCookieを送信しない。
