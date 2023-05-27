@@ -9,5 +9,7 @@ import (
 var app application
 
 func TestMain(m *testing.M) {
+	app.Session = getSession() // get a session manager
+
 	os.Exit(m.Run())
 }
