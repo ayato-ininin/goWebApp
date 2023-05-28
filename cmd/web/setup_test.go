@@ -9,6 +9,8 @@ import (
 var app application
 
 func TestMain(m *testing.M) {
+	pathToTemplates = "./../../templates/"
+
 	app.Session = getSession() // get a session manager
 
 	os.Exit(m.Run())

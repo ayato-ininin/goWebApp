@@ -25,8 +25,6 @@ func Test_application_handlers(t *testing.T) {
 	ts := httptest.NewTLSServer(routes)
 	defer ts.Close()
 
-	pathToTemplates = "./../../templates/"
-
 	// range through the tests
 	for _, e := range theTests {
 		resp, err := ts.Client().Get(ts.URL + e.url)
@@ -76,6 +74,19 @@ func TestAppHome(t *testing.T) {
 		if !strings.Contains(string(body), e.expectedHTML) {
 			t.Errorf("%s: did not find %s in response body", e.name, e.expectedHTML)
 		}
+	}
+}
+
+
+// ./tempaltes/ファイルにないテンプレートを指定した場合のテスト
+func TestApp_renderWithBadTemplate(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	req = addContextAndSessionToRequest(req, app) // middlewareのかわりに追加設定
+	rr := httptest.NewRecorder()
+
+	err := app.render(rr, req, "bad.page.gohtml", &TemplateData{})
+	if err == nil {
+		t.Error("expected error from bad template, but did not get one")
 	}
 }
 
