@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,9 +16,12 @@ func Test_application_handlers(t *testing.T) {
 		name string
 		url string
 		expectedStatusCode int
+		expectedURL string
+		expectedFirstStatusCode int
 	}{
-		{"home", "/", http.StatusOK},
-		{"404", "/fish", http.StatusNotFound},
+		{"home", "/", http.StatusOK, "/", http.StatusOK},
+		{"404", "/fish", http.StatusNotFound, "/fish", http.StatusNotFound},
+		{"profile", "/user/profile", http.StatusOK, "/", http.StatusTemporaryRedirect},
 	}
 
 	routes := app.routes()
@@ -25,6 +29,20 @@ func Test_application_handlers(t *testing.T) {
 	// create a test server
 	ts := httptest.NewTLSServer(routes)
 	defer ts.Close()
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	// デフォルトのts.clientはデフォルトでリダイレクトを追跡し、Locationヘッダをリダイレクト先に書き換える。
+	// なのでリダイレクト前のレスポンスを取得するためには、リダイレクトを追跡しないclientを作成する必要がある。
+	// checkRedirectでリダイレクトの動作をカスタマイズしている。e.expectedFirstStatusCode用。
+	client := &http.Client{
+		Transport: tr,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse // don't follow redirects
+		},
+	}
 
 	// range through the tests
 	for _, e := range theTests {
@@ -36,6 +54,15 @@ func Test_application_handlers(t *testing.T) {
 
 		if resp.StatusCode != e.expectedStatusCode {
 			t.Errorf("for %s, expected %d but got %d", e.name, e.expectedStatusCode, resp.StatusCode)
+		}
+
+		if resp.Request.URL.Path != e.expectedURL {
+			t.Errorf("%s: expected final url of %s but got %s", e.name, e.expectedURL, resp.Request.URL.Path)
+		}
+
+		resp2, _ := client.Get(ts.URL + e.url)
+		if resp2.StatusCode != e.expectedFirstStatusCode {
+			t.Errorf("%s: expected first returned code to be %d but got %d", e.name, e.expectedFirstStatusCode, resp2.StatusCode)
 		}
 	}
 }
