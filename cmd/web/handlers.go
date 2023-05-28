@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -21,6 +20,10 @@ func (app *application) Home(w http.ResponseWriter, r *http.Request) {
 		app.Session.Put(r.Context(), "test", "Hit this page at" + time.Now().UTC().String())
 	}
 	_ = app.render(w, r, "home.page.gohtml", &TemplateData{Data: td})
+}
+
+func (app *application) Profile(w http.ResponseWriter, r *http.Request) {
+	_ = app.render(w, r, "profile.page.gohtml", &TemplateData{})
 }
 
 type TemplateData struct{
@@ -58,7 +61,10 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	form.Required("email", "password")
 
 	if !form.Valid() {
-		fmt.Fprint(w, "failed validation")
+		// redirect toh the login page with error message
+		app.Session.Put(r.Context(), "error", "Invalid email or password")// add msg in context
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
 
 	// get the username and password from the form
@@ -67,12 +73,24 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.DB.GetUserByEmail(email)
 	if err != nil {
-		log.Println(err)
+		// redirect toh the login page with error message
+		app.Session.Put(r.Context(), "error", "Invalid Login")// add msg in context
+		http.Redirect(w, r, "/login", http.StatusSeeOther)// 303, 別ページへの移動
+		return
 	}
 
-	log.Println("From database", user.FirstName)
+	log.Println(password, user.FirstName)
 
-	log.Println(email, password)
+	// authenticate the user
+	// if not authenticated redirect to login page with error message
 
-	fmt.Fprint(w, email)
+	// prevent fixation attack(セッション固定攻撃対策)
+	_ = app.Session.RenewToken(r.Context())
+
+	// store success message in session
+
+	// redirect to some other page
+	// flashは一時的なメッセージを表示するためのキーフレーズ
+	app.Session.Put(r.Context(), "flash", "Successfully logged in!")// add msg in context
+	http.Redirect(w, r, "/user/profile", http.StatusSeeOther)// 303, 別ページへの移動
 }
