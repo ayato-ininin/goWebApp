@@ -86,10 +86,12 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(password, user.FirstName)
-
-	// authenticate the user
-	// if not authenticated redirect to login page with error message
+	if !app.authenticate(r, user, password) {
+		// redirect toh the login page with error message
+		app.Session.Put(r.Context(), "error", "Invalid Login")// add msg in context
+		http.Redirect(w, r, "/", http.StatusSeeOther)// 303, 別ページへの移動
+		return
+	}
 
 	// prevent fixation attack(セッション固定攻撃対策)
 	_ = app.Session.RenewToken(r.Context())
@@ -100,4 +102,14 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	// flashは一時的なメッセージを表示するためのキーフレーズ
 	app.Session.Put(r.Context(), "flash", "Successfully logged in!")// add msg in context
 	http.Redirect(w, r, "/user/profile", http.StatusSeeOther)// 303, 別ページへの移動
+}
+
+// DBから取得したユーザのパスワード確認後、セッションにユーザ情報を格納
+func (app *application) authenticate(r *http.Request, user *data.User, password string) bool {
+	if valid, err := user.PasswordMatches(password); err != nil || !valid {
+		return false
+	}
+
+	app.Session.Put(r.Context(), "user", user)
+	return true
 }

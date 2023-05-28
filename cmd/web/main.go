@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
+	"go_test_prac/webApp/pkg/data"
 	"go_test_prac/webApp/pkg/db"
 	"log"
 	"net/http"
@@ -15,6 +17,9 @@ type application struct {
 	Session *scs.SessionManager
 }
 func main() {
+	// app.Session.Put(r.Context(), "user", user)→この関数がgobを使用していて、登録していないとエラーになる
+	gob.Register(data.User{})
+
 	// set up an app config
 	app := application{}
 
