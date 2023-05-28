@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -101,4 +102,72 @@ func addContextAndSessionToRequest(req *http.Request, app application) *http.Req
 	req = req.WithContext(getCtx(req)) // contextデータをテストリクエストに追加
 	ctx, _ := app.Session.Load(req.Context(), req.Header.Get("X-Session")) // sessionデータをテストリクエストに追加
 	return req.WithContext(ctx)
+}
+
+func Test_app_Login(t *testing.T) {
+	tests := []struct {
+		name string
+		postedData url.Values
+		expectedStatusCode int
+		expectedLocation string
+	}{
+		{
+			name: "valid login",
+			postedData: url.Values{
+				"email": {"admin@example.com"},
+				"password": {"secret"},
+			},
+			expectedStatusCode: http.StatusSeeOther,
+			expectedLocation: "/user/profile",
+		},
+		{
+			name: "missing form data",
+			postedData: url.Values{
+				"email": {""},
+				"password": {""},
+			},
+			expectedStatusCode: http.StatusSeeOther,
+			expectedLocation: "/",
+		},
+		{
+			name: "user not found",
+			postedData: url.Values{
+				"email": {"you@gmail.com"},
+				"password": {"password"},
+			},
+			expectedStatusCode: http.StatusSeeOther,
+			expectedLocation: "/",
+		},
+		{
+			name: "bad credentials",
+			postedData: url.Values{
+				"email": {"admin@example.com"},
+				"password": {"badpw"},
+			},
+			expectedStatusCode: http.StatusSeeOther,
+			expectedLocation: "/",
+		},
+	}
+
+	for _, e := range tests {
+		req, _ := http.NewRequest("POST", "/login", strings.NewReader(e.postedData.Encode()))
+		req = addContextAndSessionToRequest(req, app) // middlewareのかわりに追加設定
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(app.Login)
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("%s: returned wrong status code; expected %d, got %d", e.name, e.expectedStatusCode, rr.Code)
+		}
+
+		actualLocation, err := rr.Result().Location()
+		if err == nil {
+			if actualLocation.String() != e.expectedLocation {
+				t.Errorf("%s: returned wrong location; expected %s, got %s", e.name, e.expectedLocation, actualLocation.String())
+			}
+		} else {
+			t.Errorf("%s: no location header set", e.name)
+		}
+	}
 }
