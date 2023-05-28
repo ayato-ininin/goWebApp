@@ -79,7 +79,6 @@ func Test_application_ipFromContext(t *testing.T) {
 
 func Test_app_auth(t *testing.T) {
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 	})
 
 	tests := []struct {
@@ -94,7 +93,7 @@ func Test_app_auth(t *testing.T) {
 		handlerToTest := app.auth(nextHandler)
 		req := httptest.NewRequest("GET", "http://testing", nil)
 		req = addContextAndSessionToRequest(req, app)
-		if !e.isAuth {
+		if e.isAuth {
 			app.Session.Put(req.Context(), "user", data.User{ID: 1})
 		}
 		rr := httptest.NewRecorder()
