@@ -4,7 +4,8 @@ import (
 	"encoding/gob"
 	"flag"
 	"go_test_prac/webApp/pkg/data"
-	"go_test_prac/webApp/pkg/db"
+	"go_test_prac/webApp/pkg/repository"
+	"go_test_prac/webApp/pkg/repository/dbrepo"
 	"log"
 	"net/http"
 
@@ -13,7 +14,7 @@ import (
 
 type application struct {
 	DSN string // data source name(PW等含む)
-	DB db.PostgresConn // DBconnetion
+	DB repository.DatabaseRepo // DBconnetion
 	Session *scs.SessionManager
 }
 func main() {
@@ -35,7 +36,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	app.DB = db.PostgresConn{DB: conn}
+	app.DB = &dbrepo.PostgresDBRepo{DB: conn}
 
 	// get a session manager
 	app.Session = getSession()
