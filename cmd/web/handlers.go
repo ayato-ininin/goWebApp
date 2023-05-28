@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go_test_prac/webApp/pkg/data"
 	"html/template"
 	"log"
 	"net/http"
@@ -29,8 +30,11 @@ func (app *application) Profile(w http.ResponseWriter, r *http.Request) {
 type TemplateData struct{
 	IP string
 	Data map[string]any
+	Error string
+	Flash string
+	User data.User
 }
-func (app *application) render(w http.ResponseWriter, r *http.Request, t string, data *TemplateData) error {
+func (app *application) render(w http.ResponseWriter, r *http.Request, t string, td *TemplateData) error {
 	// parse the template from disk.
 	parsedTemplate, err := template.ParseFiles(path.Join(pathToTemplates, t), path.Join(pathToTemplates, "base.layout.gohtml"))
 	if err != nil {
@@ -38,10 +42,13 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, t string,
 		return err
 	}
 
-	data.IP = app.ipFromContext(r.Context())
+	td.IP = app.ipFromContext(r.Context())
+
+	td.Error = app.Session.PopString(r.Context(), "error")
+	td.Flash = app.Session.PopString(r.Context(), "flash")
 
 	// execute the template, passing it data if any
-	err = parsedTemplate.Execute(w, data)
+	err = parsedTemplate.Execute(w, td)
 	if err != nil {
 		return err
 	}
@@ -63,7 +70,7 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		// redirect toh the login page with error message
 		app.Session.Put(r.Context(), "error", "Invalid email or password")// add msg in context
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
@@ -75,7 +82,7 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// redirect toh the login page with error message
 		app.Session.Put(r.Context(), "error", "Invalid Login")// add msg in context
-		http.Redirect(w, r, "/login", http.StatusSeeOther)// 303, 別ページへの移動
+		http.Redirect(w, r, "/", http.StatusSeeOther)// 303, 別ページへの移動
 		return
 	}
 
