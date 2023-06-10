@@ -246,3 +246,32 @@ func TestPostgresDBRepoResetPassword(t *testing.T) {
 		t.Errorf("password not updated")
 	}
 }
+
+func TestPostgresDBRepoInsertUserImage(t *testing.T) {
+	image := data.UserImage{
+		UserID:    1,
+		FileName:  "test.jpg",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	newID, err := testRepo.InsertUserImage(image)
+	if err != nil {
+		t.Errorf("error inserting user image: %s", err)
+	}
+
+	if newID != 1 {
+		t.Errorf("insert user image returned wrong id: want 1, got %d", newID)
+	}
+
+	image = data.UserImage{
+		UserID:    100,
+		FileName:  "test.jpg",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	_, err = testRepo.InsertUserImage(image)
+	if err == nil {
+		t.Errorf("no error reported when inserting user image with non existent user id")
+	}
+}
