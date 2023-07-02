@@ -159,7 +159,7 @@ type UploadedFile struct {
 	FileSize int64
 }
 
-// 対象のディレクトリにリクエストから送られてきたファイルを保存
+// 対象のディレクトリにリクエストから送られてきたファイルを保存する関数
 func (app *application) UploadFiles(r *http.Request, uploadDir string) ([]*UploadedFile, error) {
 	var uploadedFiles []*UploadedFile
 
