@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"go_test_prac/webApp/pkg/data"
 	"net/http"
 	"strings"
 	"time"
@@ -23,7 +24,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func (app *application) getTokenFromHeaderandVerify(w http.ResponseWriter, r *http.Request) (string, *Claims, error) {
+func (app *application) getTokenFromHeaderAndVerify(w http.ResponseWriter, r *http.Request) (string, *Claims, error) {
 	// we expect our authorization header to be in the format
 	// Authorization: Bearer {token}
 	// add a header
@@ -79,4 +80,50 @@ func (app *application) getTokenFromHeaderandVerify(w http.ResponseWriter, r *ht
 	// valid token
 	return token, claims, nil
 
+}
+
+func (app *application) generateTokenPair(user *data.User) (TokenPairs, error) {
+	// create the token
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	// set claims
+	claims := token.Claims.(jwt.MapClaims)
+	claims["name"] = fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+	claims["sub"] = fmt.Sprintf("%d", user.ID)
+	claims["aud"] = app.Domain
+	claims["iss"] = app.Domain
+	if user.IsAdmin == 1 {
+		claims["admin"] = true
+	} else {
+		claims["admin"] = false
+	}
+
+	// set the expiry
+	claims["exp"] = time.Now().Add(jwtTokenExpiry).Unix()
+
+	// create the signed token
+	signedAccessToken, err := token.SignedString([]byte(app.JWTSecret))
+	if err != nil {
+		return TokenPairs{}, err
+	}
+
+	// create the refresh token
+	refreshToken := jwt.New(jwt.SigningMethodHS256)
+	refreshTokenClaims := refreshToken.Claims.(jwt.MapClaims)
+	refreshTokenClaims["sub"] = fmt.Sprintf("%d", user.ID)
+	// set the expiry; must be longer than the access token
+	refreshTokenClaims["exp"] = time.Now().Add(refreshTokenExpiry).Unix()
+
+	// create the signed refresh token
+	signedRefreshToken, err := refreshToken.SignedString([]byte(app.JWTSecret))
+	if err != nil {
+		return TokenPairs{}, err
+	}
+
+	var tokenPair = TokenPairs{
+		Token: signedAccessToken,
+		RefreshToken: signedRefreshToken,
+	}
+
+	return tokenPair, nil
 }
