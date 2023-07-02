@@ -270,3 +270,7 @@ func simulatePNGUpload(fileToUpload string, writer *multipart.Writer, t *testing
 	// write the png to our io.Writer
 	err = png.Encode(part, img)
 }
+
+func Test_app_UploadProfilePic(t *testing.T) {
+	uploadPath = "./testdata/uploads/"
+}
