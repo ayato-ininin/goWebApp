@@ -16,7 +16,7 @@ type PostgresDBRepo struct {
 	DB *sql.DB
 }
 
-//implementing
+// implementing
 func (m *PostgresDBRepo) Connection() *sql.DB {
 	return m.DB
 }
@@ -68,10 +68,10 @@ func (m *PostgresDBRepo) GetUser(id int) (*data.User, error) {
 	query := `
 		select 
 			u.id, u.email, u.first_name, u.last_name, u.password, u.is_admin, u.created_at, u.updated_at,
-			coalesce(ui.filename, '')
+			coalesce(ui.file_name, '')
 		from 
 			users u
-			left join user_images ui on (u.id = ui.user_id)
+			left join user_images ui on (ui.user_id = u.id)
 		where 
 		    u.id = $1`
 
@@ -105,10 +105,10 @@ func (m *PostgresDBRepo) GetUserByEmail(email string) (*data.User, error) {
 	query := `
 		select 
 			u.id, u.email, u.first_name, u.last_name, u.password, u.is_admin, u.created_at, u.updated_at,
-			coalesce(ui.filename, '')
+			coalesce(ui.file_name, '')
 		from 
 			users u
-			left join user_images ui on (u.id = ui.user_id)
+			left join user_images ui on (ui.user_id = u.id)
 		where 
 		    u.email = $1`
 
@@ -251,5 +251,3 @@ func (m *PostgresDBRepo) InsertUserImage(i data.UserImage) (int, error) {
 
 	return newID, nil
 }
-
-
