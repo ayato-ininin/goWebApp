@@ -8,6 +8,11 @@
         <hr>
 
         <!-- decide whether or not to display profile pic -->
+        {{if ne .User.ProfilePic.FileName ""}}
+          <img src="/static/img/{{.User.ProfilePic.FileName}}" style="max-width: 300px;" alt="profile" class="img-fluid">
+        {{else}}
+          <p>No profile image uploaded yet...</p>
+        {{end}}
 
         <hr>
 
