@@ -13,6 +13,7 @@
 <div class="container">
   <div class="row">
     <div class="content">
+      <!-- err = parsedTemplate.Execute(w, td)→handler.goでtemplate dataを引数としてexecuteしているから、 td構造体の中の.Flash等を呼び出せている-->
       {{with .Flash}}
         <div class="mt-3 alert alert-success" role="alert">
           {{.}}

@@ -8,6 +8,8 @@
         <hr>
 
         <!-- decide whether or not to display profile pic -->
+        <!-- ne　は　not equalの略 -->
+        <!-- err = parsedTemplate.Execute(w, td)→handler.goでtemplate dataを引数としてexecuteしているから、 td構造体の中の.Userを呼び出せている-->
         {{if ne .User.ProfilePic.FileName ""}}
           <img src="/static/img/{{.User.ProfilePic.FileName}}" style="max-width: 300px;" alt="profile" class="img-fluid">
         {{else}}
@@ -19,7 +21,7 @@
         <form action="/user/upload-profile-pic" method="post" enctype="multipart/form-data">
 
           <label for="formFile" class="form-label">Choose an image</label>
-          <input class="form-control" type="file" id="formFile" accept="image/gif,image/jpeg,image/png">
+          <input class="form-control" type="file" name="image" id="formFile" accept="image/gif,image/jpeg,image/png">
           <input class="btn btn-primary mt-3" type="submit" value="Upload">
         </form>
       </div>
