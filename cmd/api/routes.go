@@ -15,6 +15,7 @@ func (app *application) routes() http.Handler {
 	// mux.Use(app.enabelCORS)
 
 	// authenication routes - auth handler, reflesh
+	// Ex.)curl http://localhost:8090/auth -X POST -H "Content-Type:application/json" -d '{"email":"admin@example.com","password":"secret"}'
 	mux.Post("/auth", app.authenticate)
 	mux.Post("/refresh-token", app.refresh)
 
