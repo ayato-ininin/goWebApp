@@ -3,6 +3,15 @@ package main
 import "net/http"
 
 func (app *application) authenticate(w http.ResponseWriter, r *http.Request) {
+	// read a json payload
+
+	// look up the user in the database based on the email address
+
+	// check if the password matches
+
+	// generate a JWT token
+
+	// send the token back to the client
 
 }
 
