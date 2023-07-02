@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"go_test_prac/webApp/pkg/data"
 	"image"
 	"image/png"
 	"io"
@@ -271,6 +273,49 @@ func simulatePNGUpload(fileToUpload string, writer *multipart.Writer, t *testing
 	err = png.Encode(part, img)
 }
 
+// 予期したステータスが帰ってくるのかのテスト
 func Test_app_UploadProfilePic(t *testing.T) {
 	uploadPath = "./testdata/uploads/"
+	filepath := "./testdata/img.png"
+
+	// specify a field name for the form
+	fiedlName := "file"
+
+	// create a bytes.Buffer to act as the request body
+	body := new(bytes.Buffer)//リクエストボディ
+
+	// create a new writer
+	mw := multipart.NewWriter(body)
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w, err := mw.CreateFormFile(fiedlName, filepath)//form-dataの生成、fileフィールド作成
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := io.Copy(w, file); err != nil {
+		t.Fatal(err)
+	}
+
+	mw.Close()
+
+	req := httptest.NewRequest("POST", "/upload", body)//リクエスト
+	req = addContextAndSessionToRequest(req, app)//セッションを追加するための関数
+	app.Session.Put(req.Context(), "user", data.User{ID: 1})
+	req.Header.Add("Content-Type", mw.FormDataContentType())
+
+	rr := httptest.NewRecorder()//レスポンスを受け取るためのレコーダー
+
+	handler := http.HandlerFunc(app.UploadProfilePic)//使用するハンドラーを指定
+
+	handler.ServeHTTP(rr, req)//リクエストを送り、レコーダーにレスポンスを書き込む
+
+	// ステータスコードのチェック
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("expected status %d; got %d", http.StatusSeeOther, rr.Code)
+	}
 }
