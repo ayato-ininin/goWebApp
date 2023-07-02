@@ -16,6 +16,7 @@ type User struct {
 	IsAdmin   int       `json:"is_admin"`
 	CreatedAt time.Time `json:"-"` // don't include in the JSON
 	UpdatedAt time.Time `json:"-"` // don't include in the JSON
+	ProfilePic UserImage `json:"-"`
 }
 
 // PasswordMatches uses Go's bcrypt package to compare a user supplied password
