@@ -105,8 +105,58 @@ func Test_app_userHandlers(t *testing.T) {
 	}{
 		{name:"allUsers", method:"GET", json:"", paramID:"", handler:app.allUsers, expectedStatusCode:http.StatusOK},
 		{name:"deleteUser", method:"DELETE", json:"", paramID:"1", handler:app.deleteUser, expectedStatusCode:http.StatusNoContent},
+		{name:"deleteUser bad URL param", method:"DELETE", json:"", paramID:"YYY", handler:app.deleteUser, expectedStatusCode:http.StatusBadRequest},
 		{name:"getUser valid"	, method:"GET", json:"", paramID:"1", handler:app.getUser, expectedStatusCode:http.StatusOK},
 		{name:"getUser invalid", method:"GET", json:"", paramID:"2", handler:app.getUser, expectedStatusCode:http.StatusInternalServerError},
+		{name:"getUser bad URL param", method:"GET", json:"", paramID:"YYY", handler:app.getUser, expectedStatusCode:http.StatusBadRequest},
+		{
+			name:"updateUser valid",
+			method:"PATCH",
+			json:`{"id":1,"first_name":"admin","last_name":"user","email":"admin@example.com"}`,
+			paramID:"",
+			handler: app.updateUser,
+			expectedStatusCode: http.StatusNoContent,
+		},
+		{
+			name:"updateUser invalid",
+			method:"PATCH",
+			json:`{"id":2,"first_name":"admin","last_name":"user","email":"admin@example.com"}`,
+			paramID:"",
+			handler: app.updateUser,
+			expectedStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name:"updateUser invalid json",
+			method:"PATCH",
+			json:`{"id":1,first_name:"admin","last_name":"user","email":"admin@example.com"}`,
+			paramID:"",
+			handler: app.updateUser,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:"insertUser valid",
+			method:"PUT",
+			json:`{"first_name":"jack","last_name":"test","email":"admin@example.com"}`,
+			paramID:"",
+			handler: app.insertUser,
+			expectedStatusCode: http.StatusNoContent,
+		},
+		{
+			name:"insertUser invalid",
+			method:"PUT",
+			json:`{"foo":"bar","first_name":"jack","last_name":"test","email":"admin@example.com"}`,
+			paramID:"",
+			handler: app.insertUser,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:"insertUser invalid json",
+			method:"PUT",
+			json:`{first_name":"jack","last_name":"test","email":"admin@example.com"}`,
+			paramID:"",
+			handler: app.insertUser,
+			expectedStatusCode: http.StatusBadRequest,
+		},
 	}
 
 	for _, e := range tests {
