@@ -42,15 +42,28 @@ func (app *application) authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate a JWT token
-	TokenPairs, err := app.generateTokenPair(user)
+	tokenPairs, err := app.generateTokenPair(user)
 	if err != nil {
 		app.errorJSON(w, errors.New("unauthorized"), http.StatusUnauthorized)
 		return
 	}
 
+		// SPAの場合に使用するらしいが。
+	// 必要な人に応じて、レスポンスに加えてcokkieにもいれておく。
+	http.SetCookie(w, &http.Cookie{
+		Name: "Host-refresh_token",
+		Path: "/",
+		Value: tokenPairs.RefreshToken,
+		Expires: time.Now().Add(refreshTokenExpiry),
+		MaxAge: int(refreshTokenExpiry.Seconds()),
+		SameSite: http.SameSiteStrictMode,
+		Domain: "localhost",
+		HttpOnly: true,
+		Secure: true,
+	})
 
 	// send the token back to the client
-	_ = app.writeJSON(w, http.StatusOK, TokenPairs)
+	_ = app.writeJSON(w, http.StatusOK, tokenPairs)
 
 }
 
@@ -101,9 +114,8 @@ func (app *application) refresh(w http.ResponseWriter, r *http.Request) {
 
 	// SPAの場合に使用するらしいが。
 	// 必要な人に応じて、レスポンスに加えてcokkieにもいれておく。
-	// 用途は？
 	http.SetCookie(w, &http.Cookie{
-		Name: "__Host-refresh_token",
+		Name: "Host-refresh_token",
 		Path: "/",
 		Value: tokenPairs.RefreshToken,
 		Expires: time.Now().Add(refreshTokenExpiry),
@@ -115,6 +127,70 @@ func (app *application) refresh(w http.ResponseWriter, r *http.Request) {
 	})
 
 	_ = app.writeJSON(w, http.StatusOK, tokenPairs)
+}
+
+func (app *application) refreshUsingCookie(w http.ResponseWriter, r *http.Request) {
+	for _, cookie := range r.Cookies() {
+		if cookie.Name == "Host-refresh_token" {
+			claims := &Claims{}
+			refreshToken := cookie.Value
+
+			_, err := jwt.ParseWithClaims(refreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+				return []byte(app.JWTSecret), nil
+			})
+
+			if err != nil {
+				app.errorJSON(w, err, http.StatusBadRequest)
+				return
+			}
+
+			// refresh tokenの有効期限が30秒以上残っているか確認
+			// 30秒以上残っている場合は、新しいrefresh tokenを発行しない
+			// if time.Unix(claims.ExpiresAt.Unix(), 0).Sub(time.Now()) > 30 * time.Second {
+			// 	app.errorJSON(w, errors.New("refresh token does not need renewed yet"), http.StatusTooEarly)
+			// 	return
+			// }
+
+			// get the user id from the claims
+			userID, err := strconv.Atoi(claims.Subject)
+			if err != nil {
+				app.errorJSON(w, err, http.StatusBadRequest)
+				return
+			}
+
+			user, err := app.DB.GetUser(userID)
+			if err != nil {
+				app.errorJSON(w, errors.New("unknown user"), http.StatusBadRequest)
+				return
+			}
+
+			tokenPairs, err := app.generateTokenPair(user)
+			if err != nil {
+				app.errorJSON(w, err, http.StatusBadRequest)
+				return
+			}
+
+			// SPAの場合に使用するらしいが。
+			// 必要な人に応じて、レスポンスに加えてcokkieにもいれておく。
+			http.SetCookie(w, &http.Cookie{
+				Name: "Host-refresh_token",
+				Path: "/",
+				Value: tokenPairs.RefreshToken,
+				Expires: time.Now().Add(refreshTokenExpiry),
+				MaxAge: int(refreshTokenExpiry.Seconds()),
+				SameSite: http.SameSiteStrictMode,
+				Domain: "localhost",
+				HttpOnly: true,
+				Secure: true,
+			})
+
+			// send back JSON
+			_ = app.writeJSON(w, http.StatusOK, tokenPairs)
+			return
+		}
+	}
+
+	app.errorJSON(w, errors.New("no refresh token found in cookie"), http.StatusUnauthorized)
 }
 
 func (app *application) allUsers(w http.ResponseWriter, r *http.Request) {

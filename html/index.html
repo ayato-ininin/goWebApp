@@ -63,9 +63,9 @@
 <script>
     // we store our access token in memory - the only safe place
     let access_token = "";
-    let refresh_Token = "";
+    let refresh_token = "";
 
-    // get references to ui elements
+    // get references to UI elements
     let loginForm = document.getElementById("login-form");
     let loginBtn = document.getElementById("login");
     let userBtn = document.getElementById("getUserBtn");
@@ -75,42 +75,71 @@
     let refreshTokenDisplay = document.getElementById("refresh");
     let logoutBtn = document.getElementById("logout");
 
-    login.addEventListener("click", function(){
+    document.addEventListener("DOMContentLoaded", function() {
+        // call refeshTokens; this will, by default, log the user in
+        // if he or she has a valid, non-expired __Host-refresh_token cookie.
+        refreshTokens();
+    })
+
+
+    loginBtn.addEventListener("click", function() {
         const payload = {
             email: document.getElementById("email").value,
-            password: document.getElementById("password").value
-        };
+            password: document.getElementById("password").value,
+        }
 
         const requestOptions = {
             method: "POST",
-            credentials: "include",// cookieを使用するため必要
+            credentials: "include",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify(payload)
-        };
+            body: JSON.stringify(payload),
+        }
 
         fetch(`/web/auth`, requestOptions)
             .then((response) => response.json())
-            .then(data => {
+            .then((data) => {
                 if (data.access_token) {
                     access_token = data.access_token;
                     refresh_token = data.refresh_token;
-                    console.log(data)
                     setUI(true);
                 }
             })
             .catch(error => {
                 alert(error);
-            });
+            })
     })
+
+    function refreshTokens() {
+        // we'll send a get request which includes the __Host-refresh-tokien cookie if it exists
+        const requestOptions = {
+            method: "GET",
+            credentials: "include",
+        }
+
+        fetch(`/web/refresh-token`, requestOptions)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.access_token) {
+                    access_token = data.access_token;
+                    refresh_token = data.refresh_token;
+                    setUI(true);
+                } else {
+                    setUI(false);
+                }
+            })
+            .catch(error => {
+                console.log("user is not logged in");
+            })
+    }
 
     function setUI(loggedIn) {
         if (loggedIn) {
             tokensDiv.classList.remove("d-none");
             loginForm.classList.add("d-none");
             logoutBtn.classList.remove("d-none");
-            tokenDisplay.innerHTML =access_token;
+            tokenDisplay.innerHTML = access_token;
             refreshTokenDisplay.innerHTML = refresh_token;
         } else {
             tokensDiv.classList.add("d-none");
