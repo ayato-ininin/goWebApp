@@ -74,7 +74,7 @@ func (app *application) refresh(w http.ResponseWriter, r *http.Request) {
 	// refresh tokenの有効期限が30秒以上残っているか確認
 	// 30秒以上残っている場合は、新しいrefresh tokenを発行しない
 	if time.Unix(claims.ExpiresAt.Unix(), 0).Sub(time.Now()) > 30 * time.Second {
-		app.errorJSON(w, errors.New("refresh token does not need renewed yet"), http.StatusBadRequest)
+		app.errorJSON(w, errors.New("refresh token does not need renewed yet"), http.StatusTooEarly)
 		return
 	}
 
