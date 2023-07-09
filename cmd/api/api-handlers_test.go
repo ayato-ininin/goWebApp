@@ -241,3 +241,27 @@ func Test_app_refreshUsingCookie(t *testing.T) {
 		}
 	}
 }
+
+func Test_app_deleteRefreshCookie(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/logout", nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(app.deleteRefreshCookie)
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusAccepted {
+		t.Errorf("expected status %d, but got %d", http.StatusOK, rr.Code)
+	}
+
+	foundCookie := false
+	for _, c := range rr.Result().Cookies() {
+		if c.Name == "Host-refresh_token" {
+			foundCookie = true
+			if c.Expires.After(time.Now()) {
+				t.Errorf("expected cookie is deleted, but it was")
+			}
+		}
+	}
+	if !foundCookie {
+		t.Errorf("Host-refresh_token cookie not found")
+	}
+}
