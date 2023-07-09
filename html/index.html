@@ -196,6 +196,22 @@
         }
     }
 
+    logoutBtn.addEventListener("click", function() {
+        access_token = "";
+        refresh_token
+        const requestOptions = {
+            method: "GET",
+        }
+
+        fetch(`/web/logout`, requestOptions)
+            .then((response) => {
+                setUI(false);
+            })
+            .catch(error => {
+                userOutput.innerHTML = error;
+            })
+    })
+
 </script>
 
 </body>
