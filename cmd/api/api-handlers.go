@@ -48,18 +48,18 @@ func (app *application) authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-		// SPAの場合に使用するらしいが。
+	// SPAの場合に使用するらしいが。
 	// 必要な人に応じて、レスポンスに加えてcokkieにもいれておく。
 	http.SetCookie(w, &http.Cookie{
-		Name: "Host-refresh_token",
-		Path: "/",
-		Value: tokenPairs.RefreshToken,
-		Expires: time.Now().Add(refreshTokenExpiry),
-		MaxAge: int(refreshTokenExpiry.Seconds()),
+		Name:     "Host-refresh_token",
+		Path:     "/",
+		Value:    tokenPairs.RefreshToken,
+		Expires:  time.Now().Add(refreshTokenExpiry),
+		MaxAge:   int(refreshTokenExpiry.Seconds()),
 		SameSite: http.SameSiteStrictMode,
-		Domain: "localhost",
+		Domain:   "localhost",
 		HttpOnly: true,
-		Secure: true,
+		Secure:   true,
 	})
 
 	// send the token back to the client
@@ -88,7 +88,7 @@ func (app *application) refresh(w http.ResponseWriter, r *http.Request) {
 
 	// refresh tokenの有効期限が30秒以上残っているか確認
 	// 30秒以上残っている場合は、新しいrefresh tokenを発行しない
-	if time.Unix(claims.ExpiresAt.Unix(), 0).Sub(time.Now()) > 30 * time.Second {
+	if time.Unix(claims.ExpiresAt.Unix(), 0).Sub(time.Now()) > 30*time.Second {
 		app.errorJSON(w, errors.New("refresh token does not need renewed yet"), http.StatusTooEarly)
 		return
 	}
@@ -115,15 +115,15 @@ func (app *application) refresh(w http.ResponseWriter, r *http.Request) {
 	// SPAの場合に使用するらしいが。
 	// 必要な人に応じて、レスポンスに加えてcokkieにもいれておく。
 	http.SetCookie(w, &http.Cookie{
-		Name: "Host-refresh_token",
-		Path: "/",
-		Value: tokenPairs.RefreshToken,
-		Expires: time.Now().Add(refreshTokenExpiry),
-		MaxAge: int(refreshTokenExpiry.Seconds()),
+		Name:     "Host-refresh_token",
+		Path:     "/",
+		Value:    tokenPairs.RefreshToken,
+		Expires:  time.Now().Add(refreshTokenExpiry),
+		MaxAge:   int(refreshTokenExpiry.Seconds()),
 		SameSite: http.SameSiteStrictMode,
-		Domain: "localhost",
+		Domain:   "localhost",
 		HttpOnly: true,
-		Secure: true,
+		Secure:   true,
 	})
 
 	_ = app.writeJSON(w, http.StatusOK, tokenPairs)
@@ -173,15 +173,15 @@ func (app *application) refreshUsingCookie(w http.ResponseWriter, r *http.Reques
 			// SPAの場合に使用するらしいが。
 			// 必要な人に応じて、レスポンスに加えてcokkieにもいれておく。
 			http.SetCookie(w, &http.Cookie{
-				Name: "Host-refresh_token",
-				Path: "/",
-				Value: tokenPairs.RefreshToken,
-				Expires: time.Now().Add(refreshTokenExpiry),
-				MaxAge: int(refreshTokenExpiry.Seconds()),
+				Name:     "Host-refresh_token",
+				Path:     "/",
+				Value:    tokenPairs.RefreshToken,
+				Expires:  time.Now().Add(refreshTokenExpiry),
+				MaxAge:   int(refreshTokenExpiry.Seconds()),
 				SameSite: http.SameSiteStrictMode,
-				Domain: "localhost",
+				Domain:   "localhost",
 				HttpOnly: true,
-				Secure: true,
+				Secure:   true,
 			})
 
 			// send back JSON
@@ -203,9 +203,8 @@ func (app *application) allUsers(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, users)
 }
 
-
 func (app *application) getUser(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(chi.URLParam(r,"userID"))
+	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
 		app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -238,7 +237,7 @@ func (app *application) updateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) deleteUser(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(chi.URLParam(r,"userID"))
+	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
 		app.errorJSON(w, err, http.StatusBadRequest)
 		return
