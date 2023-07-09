@@ -81,6 +81,25 @@
         refreshTokens();
     })
 
+    let refreshRunning = false;//自動更新が始まっているかどうか(2重起動防止)
+    let refreshTime = new Date();
+    let secondsRemaining = (600 - refreshTime.getSeconds()) * 1000;// every 10 minutes
+    // let secondsRemaining = (5 - refreshTime.getSeconds()) * 1000;// every 5 seconds
+
+    function autoRefresh() {
+        if (!refreshRunning) {
+            // 初回はsecondsRemainingの時間後に実行
+            setTimeout(function() {
+                // 初回以降は、setIntervalでsecondsRemainingの時間に実行
+                if (access_token !== "") {
+                    setInterval(refreshTokens, 10 * 60 * 1000);// every 10 minutes
+                    // setInterval(refreshTokens, 5 * 1000);// every 5 seconds
+                }
+            }, secondsRemaining);
+        }
+        refreshRunning = true;
+    }
+
 
     loginBtn.addEventListener("click", function() {
         const payload = {
@@ -104,6 +123,7 @@
                     access_token = data.access_token;
                     refresh_token = data.refresh_token;
                     setUI(true);
+                    autoRefresh();
                 }
             })
             .catch(error => {
@@ -125,6 +145,7 @@
                     access_token = data.access_token;
                     refresh_token = data.refresh_token;
                     setUI(true);
+                    autoRefresh();
                 } else {
                     setUI(false);
                 }
